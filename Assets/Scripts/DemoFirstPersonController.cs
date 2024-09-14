@@ -1,20 +1,25 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Net.Security;
 using UnityEngine;
 public class DemoFirstPersonController : MonoBehaviour {
     Rigidbody rb;
+    CapsuleCollider col;
 
     public Transform playerBody;
 
     [Header("Movement")]
-    public float speed = 3f;
-    public float acceleration = 12f, decelerationFactor = 1f;
+    [SerializeField] public float speed = 3f;
+    public float acceleration = 12f, crouchFactor = 0.5f, decelerationFactor = 1f;
     public float mouseSensitivity = 50f;
+    public bool isCrouching = false;
+    
 
     float xRot = 0f;     
 
     private void Start() {
         rb = playerBody.GetComponent<Rigidbody>();
+        col = playerBody.GetComponent<CapsuleCollider>();
 
         //Lock the cursor
         Cursor.lockState = CursorLockMode.Locked;
@@ -24,6 +29,21 @@ public class DemoFirstPersonController : MonoBehaviour {
     void Update() {
         Look();
         Walk();
+        Crouch();
+    }
+
+    void Crouch()
+    {
+        if (Input.GetKey(KeyCode.LeftShift))
+        {
+            isCrouching = true;
+            col.height = 0.5f;
+        }
+        else
+        {
+            col.height = 2;
+            isCrouching = false;
+        }
     }
 
     public void Look() { 
@@ -45,6 +65,13 @@ public class DemoFirstPersonController : MonoBehaviour {
     {
         Vector3 displacement;
         float maxSpeed = speed, maxAcc = acceleration;
+
+        // crouching shenanigains
+        if (isCrouching)
+        {
+            maxSpeed *= crouchFactor;
+            maxAcc *= crouchFactor;
+        }
 
         displacement = playerBody.transform.forward * Input.GetAxis("Vertical") + playerBody.transform.right * Input.GetAxis("Horizontal");
 
